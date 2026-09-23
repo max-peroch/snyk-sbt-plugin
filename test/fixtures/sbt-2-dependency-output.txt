@@ -1,0 +1,63 @@
+[info] entering thin client - BEEP WHIRR
+[info] starting sbt server in the background
+[info] use 'sbt shutdown' to shutdown the server
+[info]  
+[info] welcome to sbt 2.0.9 (GraalVM Community Java 25)
+[info] loading global plugins
+[info] loading project definition from /tmp/testproj-2.0.9/project
+[info] loading dependency tree fixture project
+[info] Defining asciiGraphWidth
+[info] The new value will be used by Compile / whatDependsOn, Test / whatDependsOn
+[info] Reapplying settings...
+[info] loading dependency tree fixture project
+com.example:sbt2-app_3:0.1.0-SNAPSHOT
+  +-com.fasterxml.jackson.core:jackson-databind:2.15.2
+  | +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | 
+  +-com.google.code.gson:gson:2.6.2
+  +-org.playframework:play-json_3:3.0.4
+  | +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | +-com.fasterxml.jackson.core:jackson-databind:2.14.3 (evicted by: 2.15.2)
+  | +-com.fasterxml.jackson.core:jackson-databind:2.15.2
+  | | +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | | +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | | 
+  | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.14.3
+  | | +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | | +-com.fasterxml.jackson.core:jackson-databind:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-databind:2.15.2
+  | |   +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | |   +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | |   +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | |   +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | |   
+  | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.3
+  | | +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | | +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | | +-com.fasterxml.jackson.core:jackson-databind:2.14.3 (evicted by: 2.15.2)
+  | | +-com.fasterxml.jackson.core:jackson-databind:2.15.2
+  | |   +-com.fasterxml.jackson.core:jackson-annotations:2.14.3 (evicted by: 2.15.2)
+  | |   +-com.fasterxml.jackson.core:jackson-annotations:2.15.2
+  | |   +-com.fasterxml.jackson.core:jackson-core:2.14.3 (evicted by: 2.15.2)
+  | |   +-com.fasterxml.jackson.core:jackson-core:2.15.2
+  | |   
+  | +-org.playframework:play-functional_3:3.0.4
+  | | +-org.scala-lang:scala3-library_3:3.3.3 [S]
+  | | 
+  | +-org.scala-lang:scala3-library_3:3.3.3 [S]
+  | 
+  +-org.scala-lang:scala3-library_3:3.3.3 [S]
+  
+[success] elapsed time: 1 s
+[0J

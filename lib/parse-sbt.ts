@@ -5,28 +5,37 @@ import * as types from './types';
 
 export { parse, parseSbtPluginResults };
 
+const logLevelPrefix = /^\[(\w+)\]\s?/;
+const coordinateLine = /^[\w_\.\-]+:[\w_\.\-]+:[\w_\.\-]+(\s\[S\])?$/;
+
+// sbt 0.13/1.x log every `dependencyTree` line as '[info] <line>', sbt 2 prints
+// the tree with no log level prefix at all. Returns null for lines logged at any
+// other level, so '[warn] a:b:1.0.0' is never mistaken for a dependency.
+function stripInfoPrefix(line: string): string | null {
+  const prefix = line.match(logLevelPrefix);
+  if (!prefix) {
+    return line;
+  }
+  return prefix[1] === 'info' ? line.slice(prefix[0].length) : null;
+}
+
 function convertStrToTree(lines) {
   const newLines = lines
     .map((line) => {
-      return line.replace(/\u001b\[0m/g, '');
+      return line.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '');
     })
+    .map(stripInfoPrefix)
     .filter((line) => {
-      if (line.indexOf('[info] ') === 0 && line.indexOf('+-') > -1) {
+      if (line === null) {
+        return false;
+      }
+      if (line.indexOf('+-') > -1) {
         return true;
       }
-      let match = line.match(/\[info\]\s[\w_\.\-]+:[\w_\.\-]+:[\w_\.\-]+/);
-      if (match && match[0].length === line.length) {
-        return true;
-      }
-      match = line.match(/\[info\]\s[\w_\.\-]+:[\w_\.\-]+:[\w_\.\-]+\s\[S\]/);
-      if (match && match[0].length === line.length) {
-        return true;
-      }
-      return false;
+      return coordinateLine.test(line);
     })
     .map((line) => {
       return line
-        .slice(7, line.length) // slice off '[info] '
         .replace(' [S]', '')
         .replace(/\|/g, ' ')
         .replace('+-', '')
