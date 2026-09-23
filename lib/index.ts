@@ -285,8 +285,7 @@ export function buildArgs(
     args.push('coursierDependencyTree'); // coursier
   } else {
     // enhance sbt default output width from 40 chars to the max
-    args.push('set asciiGraphWidth := 999999999');
-    args.push('dependencyTree'); // sbt native
+    args.push('set asciiGraphWidth := 999999999; dependencyTree');
   }
 
   return args;

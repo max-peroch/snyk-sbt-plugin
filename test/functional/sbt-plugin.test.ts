@@ -6,8 +6,7 @@ test('check build args with array not coursier', () => {
     '-Dsbt.log.noformat=true',
     '-Paxis',
     '-Pjaxen',
-    'set asciiGraphWidth := 999999999',
-    'dependencyTree',
+    'set asciiGraphWidth := 999999999; dependencyTree',
   ]);
 });
 
@@ -16,8 +15,7 @@ test('check build args with string not coursie', () => {
   expect(result).toEqual([
     '-Dsbt.log.noformat=true',
     '-Paxis -Pjaxen',
-    'set asciiGraphWidth := 999999999',
-    'dependencyTree',
+    'set asciiGraphWidth := 999999999; dependencyTree',
   ]);
 });
 
@@ -63,6 +61,17 @@ test('check build args with string for not coursier and not snykRenderTree', () 
   expect(result).toEqual([
     '-Dsbt.log.noformat=true',
     '-Paxis -Pjaxen',
+    'set asciiGraphWidth := 999999999; dependencyTree',
+  ]);
+});
+
+test('native dependencyTree path uses a single sbt command argv', () => {
+  const result = plugin.buildArgs(undefined, false, false);
+  const commands = result.filter((arg) => !arg.startsWith('-'));
+  expect(commands).toEqual([
+    'set asciiGraphWidth := 999999999; dependencyTree',
+  ]);
+  expect(commands[0].split(';').map((part) => part.trim())).toEqual([
     'set asciiGraphWidth := 999999999',
     'dependencyTree',
   ]);
