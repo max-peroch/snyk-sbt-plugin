@@ -19,6 +19,7 @@ import {
   findParentBuildDirs,
   isProjectBaseDir,
   LIST_PROJECT_BASES_COMMAND,
+  looksLikeSubproject,
   parseBaseDirectories,
   parseProjectBases,
 } from './sbt-build-root';
@@ -28,6 +29,7 @@ export {
   findParentBuildDirs,
   isProjectBaseDir,
   LIST_PROJECT_BASES_COMMAND,
+  looksLikeSubproject,
   parseBaseDirectories,
   parseProjectBases,
 } from './sbt-build-root';
@@ -160,7 +162,7 @@ async function legacyInspect(root: string, targetFile: string, options: any) {
   };
 }
 
-async function resolveBuildRoot(
+export async function resolveBuildRoot(
   startDir: string,
   sbtArgs,
 ): Promise<{ buildRoot: string; projects: string[] }> {
@@ -170,6 +172,17 @@ async function resolveBuildRoot(
       continue;
     }
     if (isProjectBaseDir(listed.baseDirs, startDir)) {
+      return { buildRoot: parent, projects: listed.projects };
+    }
+    // Base dirs incomplete (fallback `show` failed or the chain aborted early):
+    // don't silently treat the nested dir as a standalone build.
+    if (
+      listed.baseDirs.length < listed.projects.length &&
+      looksLikeSubproject(parent, startDir, listed.projects)
+    ) {
+      debug(
+        `sbt base directories incomplete for ${parent}; matched ${startDir} heuristically`,
+      );
       return { buildRoot: parent, projects: listed.projects };
     }
   }
@@ -234,9 +247,7 @@ async function listProjectBaseDirectories(
   if (sbtArgs) {
     args = args.concat(sbtArgs);
   }
-  args.push(
-    projects.map((id) => `show ${id}/baseDirectory`).join('; '),
-  );
+  args.push(projects.map((id) => `show ${id}/baseDirectory`).join('; '));
 
   try {
     const output = await subProcess.execute('sbt', args, { cwd: buildDir });

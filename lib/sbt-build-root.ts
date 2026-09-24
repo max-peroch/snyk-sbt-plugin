@@ -96,6 +96,34 @@ export function parseBaseDirectories(sbtOutput: string[]): string[] {
   return bases;
 }
 
+/**
+ * Best-effort match used only when sbt could not report base directories:
+ * the project ID equals the dir name, or the parent build.sbt references the
+ * relative path (e.g. `file("subModule")`).
+ */
+export function looksLikeSubproject(
+  parentDir: string,
+  dir: string,
+  projects: string[],
+): boolean {
+  if (projects.includes(path.basename(path.resolve(dir)))) {
+    return true;
+  }
+  const rel = path
+    .relative(realpathOrResolve(parentDir), realpathOrResolve(dir))
+    .split(path.sep)
+    .join('/');
+  if (!rel || rel.startsWith('..')) {
+    return false;
+  }
+  try {
+    const buildSbt = fs.readFileSync(path.join(parentDir, 'build.sbt'), 'utf8');
+    return buildSbt.includes(`"${rel}"`) || buildSbt.includes(`"./${rel}"`);
+  } catch {
+    return false;
+  }
+}
+
 /** True when `dir` is the base directory of a project in this build. */
 export function isProjectBaseDir(baseDirs: string[], dir: string): boolean {
   const resolved = realpathOrResolve(dir);

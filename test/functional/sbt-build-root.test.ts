@@ -4,6 +4,7 @@ import * as path from 'path';
 import {
   findParentBuildDirs,
   isProjectBaseDir,
+  looksLikeSubproject,
   parseBaseDirectories,
   parseProjectBases,
   realpathOrResolve,
@@ -89,6 +90,42 @@ test('isProjectBaseDir matches via realpath when a symlink is involved', () => {
     const viaLink = path.join(linkRoot, 'subModule');
 
     expect(isProjectBaseDir([realNested], viaLink)).toBe(true);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('looksLikeSubproject matches a relative path declared in the parent build.sbt', () => {
+  const root = path.join(fixtureDir, 'testproj-multi-module');
+  const nested = path.join(root, 'subModule');
+
+  expect(looksLikeSubproject(root, nested, ['mainModule', 'child'])).toBe(true);
+});
+
+test('looksLikeSubproject matches when the project ID equals the dir name', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sbt-looks-like-'));
+  try {
+    const nested = path.join(tmp, 'core');
+    fs.mkdirSync(nested);
+    fs.writeFileSync(path.join(tmp, 'build.sbt'), 'name := "root"\n');
+
+    expect(looksLikeSubproject(tmp, nested, ['root', 'core'])).toBe(true);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('looksLikeSubproject rejects a dir the parent build does not reference', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sbt-looks-like-'));
+  try {
+    const nested = path.join(tmp, 'standalone');
+    fs.mkdirSync(nested);
+    fs.writeFileSync(
+      path.join(tmp, 'build.sbt'),
+      'lazy val core = project in file("core")\n',
+    );
+
+    expect(looksLikeSubproject(tmp, nested, ['root', 'core'])).toBe(false);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
