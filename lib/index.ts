@@ -19,7 +19,6 @@ import {
   findParentBuildDirs,
   isProjectBaseDir,
   LIST_PROJECT_BASES_COMMAND,
-  looksLikeSubproject,
   parseBaseDirectories,
   parseProjectBases,
 } from './sbt-build-root';
@@ -29,7 +28,6 @@ export {
   findParentBuildDirs,
   isProjectBaseDir,
   LIST_PROJECT_BASES_COMMAND,
-  looksLikeSubproject,
   parseBaseDirectories,
   parseProjectBases,
 } from './sbt-build-root';
@@ -174,15 +172,12 @@ export async function resolveBuildRoot(
     if (isProjectBaseDir(listed.baseDirs, startDir)) {
       return { buildRoot: parent, projects: listed.projects };
     }
-    // Base dirs incomplete (fallback `show` failed or the chain aborted early):
-    // don't silently treat the nested dir as a standalone build.
+    // The chained `show` stops at the first failing project, so bases may be
+    // missing. Ask each project on its own rather than guess from names/paths.
     if (
-      listed.baseDirs.length < listed.projects.length &&
-      looksLikeSubproject(parent, startDir, listed.projects)
+      !listed.complete &&
+      (await isBaseOfAnyProject(sbtArgs, parent, listed.projects, startDir))
     ) {
-      debug(
-        `sbt base directories incomplete for ${parent}; matched ${startDir} heuristically`,
-      );
       return { buildRoot: parent, projects: listed.projects };
     }
   }
@@ -197,11 +192,13 @@ export async function resolveBuildRoot(
 /**
  * Single sbt launch: project IDs + canonical base directories (ID may ≠ dirname).
  * Falls back to `sbt projects` if the session command is unavailable.
+ *
+ * `complete` is false when sbt could not report every project's base.
  */
 async function listProjectsAndBases(
   sbtArgs,
   buildDir: string,
-): Promise<{ projects: string[]; baseDirs: string[] }> {
+): Promise<{ projects: string[]; baseDirs: string[]; complete: boolean }> {
   let args = ['-Dsbt.log.noformat=true'];
   if (sbtArgs) {
     args = args.concat(sbtArgs);
@@ -216,7 +213,7 @@ async function listProjectsAndBases(
       const baseDirs = parsed.map((p) => p.base);
       debug(`sbt projects in this build: ${projects.join(', ')}`);
       debug(`sbt project base directories: ${baseDirs.join(', ')}`);
-      return { projects, baseDirs };
+      return { projects, baseDirs, complete: true };
     }
     debug(
       'snykListProjectBases produced no rows; falling back to projects + show',
@@ -231,14 +228,22 @@ async function listProjectsAndBases(
     buildDir,
     projects,
   );
-  return { projects, baseDirs };
+  return {
+    projects,
+    baseDirs: baseDirs || [],
+    complete: baseDirs !== undefined,
+  };
 }
 
+/**
+ * Base directories of `projects`, or undefined if the `show` chain failed
+ * (sbt aborts the chain at the first failure, so the output is partial).
+ */
 async function listProjectBaseDirectories(
   sbtArgs,
   buildDir: string,
   projects: string[],
-): Promise<string[]> {
+): Promise<string[] | undefined> {
   if (projects.length === 0) {
     return [];
   }
@@ -256,8 +261,31 @@ async function listProjectBaseDirectories(
     return baseDirs;
   } catch (err) {
     debug('Failed to list sbt project base directories: ', err);
-    return [];
+    return undefined;
   }
+}
+
+/**
+ * Last resort when the chained `show` failed: one sbt launch per project,
+ * stopping at the first project whose base is `dir`. Failing projects are
+ * skipped.
+ */
+async function isBaseOfAnyProject(
+  sbtArgs,
+  buildDir: string,
+  projects: string[],
+  dir: string,
+): Promise<boolean> {
+  debug(
+    `sbt base directories incomplete for ${buildDir}; checking ${projects.length} projects one by one`,
+  );
+  for (const id of projects) {
+    const baseDirs = await listProjectBaseDirectories(sbtArgs, buildDir, [id]);
+    if (baseDirs && isProjectBaseDir(baseDirs, dir)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 async function listProjects(

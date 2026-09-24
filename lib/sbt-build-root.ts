@@ -76,7 +76,9 @@ export function parseProjectBases(sbtOutput: string[]): ProjectBase[] {
  * Parse absolute paths from `sbt 'show <id>/baseDirectory; …'` output.
  *
  * Only lines whose entire message is an absolute path are kept, so load noise
- * like "loading project definition from /…" is ignored.
+ * like "loading project definition from /…" is ignored. An aggregating project
+ * prints one path per aggregate, so the result is a set of bases, not a list
+ * aligned with the requested project IDs.
  */
 export function parseBaseDirectories(sbtOutput: string[]): string[] {
   const bases: string[] = [];
@@ -94,34 +96,6 @@ export function parseBaseDirectories(sbtOutput: string[]): string[] {
   }
 
   return bases;
-}
-
-/**
- * Best-effort match used only when sbt could not report base directories:
- * the project ID equals the dir name, or the parent build.sbt references the
- * relative path (e.g. `file("subModule")`).
- */
-export function looksLikeSubproject(
-  parentDir: string,
-  dir: string,
-  projects: string[],
-): boolean {
-  if (projects.includes(path.basename(path.resolve(dir)))) {
-    return true;
-  }
-  const rel = path
-    .relative(realpathOrResolve(parentDir), realpathOrResolve(dir))
-    .split(path.sep)
-    .join('/');
-  if (!rel || rel.startsWith('..')) {
-    return false;
-  }
-  try {
-    const buildSbt = fs.readFileSync(path.join(parentDir, 'build.sbt'), 'utf8');
-    return buildSbt.includes(`"${rel}"`) || buildSbt.includes(`"./${rel}"`);
-  } catch {
-    return false;
-  }
 }
 
 /** True when `dir` is the base directory of a project in this build. */
